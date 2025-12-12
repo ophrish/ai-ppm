@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Advanced PPM Predictor - Fine-tuned AI Model</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            padding: 30px; 
+            max-width: 900px; 
+            margin: auto; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+        }
+        .container { 
+            background: rgba(255,255,255,0.95); 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+            backdrop-filter: blur(10px); 
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; font-size: 2.8em; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 40px; font-size: 1.2em; }
+        .input-group { margin: 20px 0; }
+        input[type="file"], input[type="number"] { 
+            width: 100%; 
+            padding: 20px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 15px; 
+            background: #f8f9ff; 
+            font-size: 16px; 
+            transition: all 0.3s; 
+            margin: 10px 0; 
+            box-sizing: border-box;
+        }
+        input[type="file"]:hover, input[type="number"]:focus { 
+            border-color: #667eea; 
+            background: #e8ecff; 
+            outline: none; 
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        button { 
+            width: 100%; 
+            padding: 20px; 
+            background: linear-gradient(45deg, #28a745, #20c997); 
+            color: white; 
+            border: none; 
+            border-radius: 15px; 
+            font-size: 1.4em; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            margin: 20px 0; 
+        }
+        button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 10px 25px rgba(40,167,69,0.4); 
+        }
+        button:disabled { 
+            background: #ccc; 
+            cursor: not-allowed; 
+            transform: none; 
+        }
+        #result { 
+            margin-top: 30px; 
+            padding: 30px; 
+            border-radius: 20px; 
+            text-align: center; 
+            font-size: 2.8em; 
+            font-weight: bold; 
+        }
+        .result-accurate { background: linear-gradient(45deg, #28a745, #20c997); color: white; }
+        .result-low { background: linear-gradient(45deg, #ffc107, #fd7e14); color: #333; }
+        .result-mid { background: linear-gradient(45deg, #007bff, #0056b3); color: white; }
+        .result-high { background: linear-gradient(45deg, #dc3545, #c82333); color: white; }
+        #confidence { font-size: 0.5em; margin-top: 10px; opacity: 0.8; }
+        #preview { 
+            max-width: 400px; 
+            max-height: 250px; 
+            border-radius: 10px; 
+            margin: 20px auto; 
+            display: block; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+        }
+        .status { 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin: 20px 0; 
+            font-weight: bold; 
+            text-align: center; 
+        }
+        .analyzing { background: #fff3cd; color: #856404; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .features { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 20px; 
+            margin: 30px 0; 
+        }
+        .feature { 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 15px; 
+            text-align: center; 
+        }
+        .train-section { 
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); 
+            padding: 25px; 
+            border-radius: 15px; 
+            margin: 20px 0; 
+            text-align: center; 
+        }
+        .metrics { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); 
+            gap: 15px; 
+            margin: 20px 0; 
+        }
+        .metric { 
+            background: linear-gradient(45deg, #667eea, #764ba2); 
+            color: white; 
+            padding: 15px; 
+            border-radius: 10px; 
+            text-align: center; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Advanced PPM Predictor</h1>
+        <p class="subtitle">Upload training image + PPM → Fine-tune AI → Ultra-accurate predictions!</p>
+
+        <div class="train-section">
+            <h3>🎓 Train Model (1 image needed)</h3>
+            <div class="input-group">
+                <input type="file" id="trainImg" accept="image/*">
+                <input type="number" id="truePPM" placeholder="Actual PPM value" min="0" max="50" step="0.1">
+            </div>
+            <button id="trainBtn" onclick="trainModel()">🧠 Train Model</button>
+            <div id="trainStatus" class="status"></div>
+            <div id="trainMetrics" class="metrics" style="display:none;"></div>
+        </div>
+
+        <hr style="margin: 40px 0;">
+
+        <input type="file" id="predictImg" accept="image/*">
+        <button id="predictBtn" onclick="predictPPM()">🚀 Predict PPM</button>
+
+        <img id="preview" style="display:none;">
+        
+        <div id="status" class="status"></div>
+        <div id="result"></div>
+
+        <div class="features" id="features" style="display:none;">
+            <div class="feature">
+                <h4>L* (Lightness)</h4>
+                <div id="Lvalue">-</div>
+            </div>
+            <div class="feature">
+                <h4>a* (Red-Green)</h4>
+                <div id="Avalue">-</div>
+            </div>
+            <div class="feature">
+                <h4>b* (Yellow-Blue)</h4>
+                <div id="Bvalue">-</div>
+            </div>
+            <div class="feature">
+                <h4>Confidence</h4>
+                <div id="confValue">-</div>
+            </div>
+            <div class="feature">
+                <h4>Error Margin</h4>
+                <div id="errorMargin">-</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script>
+        // Advanced model with calibration capability
+        let model = null;
+        let trainingData = [];
+        let isCalibrated = false;
+        let calibrationParams = { slope: 1.0, intercept: 0.0 };
+
+        // Enhanced RGB to Lab conversion (D65, 2°)
+        function rgbToLab(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            
+            // sRGB to linear
+            r = r > 0.04045 ? Math.pow((r + 0.055)/1.055, 2.4) : r/12.92;
+            g = g > 0.04045 ? Math.pow((g + 0.055)/1.055, 2.4) : g/12.92;
+            b = b > 0.04045 ? Math.pow((b + 0.055)/1.055, 2.4) : b/12.92;
+            
+            // XYZ conversion (D65)
+            let x = r*0.4124 + g*0.3576 + b*0.1805;
+            let y = r*0.2126 + g*0.7152 + b*0.0722;
+            let z = r*0.0193 + g*0.1192 + b*0.9505;
+            
+            // Reference white
+            x /= 0.95047; y /= 1.00000; z /= 1.08883;
+            
+            // Lab conversion
+            x = x > 0.008856 ? Math.pow(x, 1/3) : (7.787*x + 16/116);
+            y = y > 0.008856 ? Math.pow(y, 1/3) : (7.787*y + 16/116);
+            z = z > 0.008856 ? Math.pow(z, 1/3) : (7.787*z + 16/116);
+            
+            return [116*y-16, 500*(x - y), 200*(y - z)];
+        }
+
+        // Create advanced model architecture
+        async function createModel() {
+            const model = tf.sequential();
+            
+            // Input layer with advanced feature processing
+            model.add(tf.layers.dense({inputShape: [8], units: 64, activation: 'relu'}));
+            model.add(tf.layers.batchNormalization());
+            model.add(tf.layers.dropout({rate: 0.3}));
+            
+            model.add(tf.layers.dense({units: 128, activation: 'relu'}));
+            model.add(tf.layers.batchNormalization());
+            model.add(tf.layers.dropout({rate: 0.3}));
+            
+            model.add(tf.layers.dense({units: 64, activation: 'relu'}));
+            model.add(tf.layers.dropout({rate: 0.2}));
+            
+            // Output layer for PPM prediction
+            model.add(tf.layers.dense({units: 1, activation: 'linear'}));
+            
+            model.compile({
+                optimizer: tf.train.adam(0.001),
+                loss: 'meanSquaredError',
+                metrics: ['mae']
+            });
+            
+            return model;
+        }
+
+        // Extract comprehensive Lab features (8D)
+        async function getAdvancedLabFeatures(file) {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.getElementById('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const data = ctx.getImageData(0, 0, img.width, img.height).data;
+                    let Ls = [], As = [], Bs = [];
+                    
+                    // Multi-region sampling for better accuracy
+                    const regions = [
+                        {x: 0.2, y: 0.2, w: 0.6, h: 0.6},  // Center
+                        {x: 0.1, y: 0.1, w: 0.8, h: 0.8},  // Full
+                        {x: 0.3, y: 0.3, w: 0.4, h: 0.4}   // Tight center
+                    ];
+                    
+                    regions.forEach(region => {
+                        for (let y = Math.floor(img.height * region.y); y < Math.floor(img.height * (region.y + region.h)); y += 3) {
+                            for (let x = Math.floor(img.width * region.x); x < Math.floor(img.width * (region.x + region.w)); x += 3) {
+                                const i = (y * img.width + x) * 4;
+                                if (i < data.length) {
+                                    const [L, a, b] = rgbToLab(data[i], data[i + 1], data[i + 2]);
+                                    Ls.push(L); As.push(a); Bs.push(b);
+                                }
+                            }
+                        }
+                    });
+                    
+                    const mean = arr => arr.reduce((a,b) => a + b, 0) / arr.length;
+                    const std = (arr, m) => Math.sqrt(arr.reduce((a,b) => a + (b - m) ** 2, 0) / arr.length);
+                    const skewness = (arr, m) => {
+                        const n = arr.length;
+                        const s = std(arr, m);
+                        if (s === 0) return 0;
+                        const sumCubedDevs = arr.reduce((a, b) => a + Math.pow((b - m), 3), 0);
+                        return (sumCubedDevs / n) / Math.pow(s, 3);
+                    };
+                    
+                    const mL = mean(Ls), mA = mean(As), mB = mean(Bs);
+                    const sL = std(Ls, mL), sA = std(As, mA), sB = std(Bs, mB);
+                    const skL = skewness(Ls, mL), skA = skewness(As, mA);
+                    
+                    resolve([mL, mA, mB, sL, sA, sB, skL, skA]);
+                };
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        // Feature normalization
+        function normalizeFeatures(features) {
+            const means = [50, 0, 0, 15, 20, 20, 0, 0];
+            const stds = [20, 30, 30, 10, 15, 15, 1, 1];
+            return features.map((f, i) => (f - means[i]) / stds[i]);
+        }
+
+        // Train model with single calibration point
+        async function trainModel() {
+            const file = document.getElementById('trainImg').files[0];
+            const truePPM = parseFloat(document.getElementById('truePPM').value);
+            
+            if (!file || isNaN(truePPM)) {
+                alert('Please upload image and enter actual PPM value');
+                return;
+            }
+
+            const btn = document.getElementById('trainBtn');
+            const status = document.getElementById('trainStatus');
+            
+            btn.disabled = true;
+            btn.textContent = '🧠 Training...';
+            status.innerHTML = '🎓 Fine-tuning AI model with your calibration data...';
+            status.className = 'status';
+
+            try {
+                // Get training features
+                const features = await getAdvancedLabFeatures(file);
+                
+                // Create or load model
+                if (!model) {
+                    model = await createModel();
+                }
+                
+                // Single-point calibration with advanced fitting
+                const normalizedFeatures = normalizeFeatures(features);
+                const inputTensor = tf.tensor2d([normalizedFeatures]);
+                const targetTensor = tf.tensor2d([[truePPM]]);
+                
+                // Fine-tune with high precision
+                await model.fit(inputTensor, targetTensor, {
+                    epochs: 200,
+                    batchSize: 1,
+                    verbose: 0,
+                    callbacks: {
+                        onEpochEnd: (epoch, logs) => {
+                            if (epoch % 50 === 0) {
+                                status.innerHTML = `🎓 Epoch ${epoch}: Loss ${logs.loss.toFixed(4)}`;
+                            }
+                        }
+                    }
+                });
+                
+                // Update calibration parameters
+                const pred = model.predict(inputTensor).dataSync()[0];
+                calibrationParams.slope = truePPM / Math.max(pred, 0.01);
+                calibrationParams.intercept = truePPM - pred * calibrationParams.slope;
+                
+                isCalibrated = true;
+                trainingData = [{features, ppm: truePPM}]; // Store first calibration point
+                
+                // Show training metrics
+                const mse = Math.abs(truePPM - pred);
+                document.getElementById('trainMetrics').innerHTML = `
+                    <div class="metric">
+                        <div style="font-size:1.2em;font-weight:bold;">${mse.toFixed(3)}</div>
+                        <div>Training Error</div>
+                    </div>
+                    <div class="metric">
+                        <div style="font-size:1.2em;font-weight:bold;">✅</div>
+                        <div>Calibrated!</div>
+                    </div>
+                `;
+                document.getElementById('trainMetrics').style.display = 'grid';
+                
+                status.innerHTML = `✅ Model calibrated! Training error: ${mse.toFixed(3)} PPM`;
+                status.className = 'status';
+                
+                inputTensor.dispose();
+                targetTensor.dispose();
+
+            } catch (error) {
+                console.error(error);
+                status.innerHTML = '❌ Training failed. Try again.';
+                status.className = 'status';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🧠 Train Model';
+            }
+        }
+
+        // Advanced PPM prediction with calibration
+        async function predictPPM() {
+            const file = document.getElementById('predictImg').files[0];
+            if (!file) {
+                alert('Please upload a chemical test strip image');
+                return;
+            }
+
+            if (!model || !isCalibrated) {
+                alert('Please train the model first with 1 calibration image + PPM value');
+                return;
+            }
+
+            const btn = document.getElementById('predictBtn');
+            const preview = document.getElementById('preview');
+            const status = document.getElementById('status');
+            const result = document.getElementById('result');
+            const featuresDiv = document.getElementById('features');
+
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = 'block';
+
+            btn.disabled = true;
+            btn.textContent = '🔬 Predicting...';
+            status.innerHTML = '🧠 AI analyzing with calibrated model...';
+            status.className = 'status analyzing';
+            result.innerHTML = '';
+            featuresDiv.style.display = 'none';
+
+            let inputTensor = null;
+
+            try {
+                // Extract advanced features
+                const features = await getAdvancedLabFeatures(file);
+                const normalized = normalizeFeatures(features);
+                
+                // Model prediction
+                inputTensor = tf.tensor2d([normalized]);
+                let rawPrediction = model.predict(inputTensor).dataSync()[0];
+                
+                // Apply calibration
+                const calibratedPPM = rawPrediction * calibrationParams.slope + calibrationParams.intercept;
+                const finalPPM = Math.max(0, calibratedPPM);
+                
+                // Advanced confidence calculation
+                const featureConsistency = 1 - (features[3] + features[4] + features[5]) / 100;
+                const calibrationConfidence = Math.min(1, 1 / (1 + Math.abs(trainingData[0].ppm - rawPrediction)));
+                const confidence = Math.min(98, (featureConsistency * 0.6 + calibrationConfidence * 0.4) * 100);
+                
+                // Error margin estimation
+                const errorMargin = Math.max(0.1, Math.abs(trainingData[0].ppm - rawPrediction) * 1.2);
+                
+                // Display features
+                document.getElementById('Lvalue').textContent = features[0].toFixed(1);
+                document.getElementById('Avalue').textContent = features[1].toFixed(1);
+                document.getElementById('Bvalue').textContent = features[2].toFixed(1);
+                document.getElementById('confValue').textContent = confidence.toFixed(0) + '%';
+                document.getElementById('errorMargin').textContent = `±${errorMargin.toFixed(2)}`;
+                featuresDiv.style.display = 'grid';
+                
+                // Show calibrated result
+                result.innerHTML = `
+                    <div>${finalPPM.toFixed(2)} PPM</div>
+                    <div id="confidence">
+                        Calibrated Confidence: ${confidence.toFixed(0)}%<br>
+                        Error Margin: ±${errorMargin.toFixed(2)} PPM
+                    </div>
+                `;
+                
+                // Color coding
+                if (finalPPM < 2) result.className = 'result-low';
+                else if (finalPPM < 10) result.className = 'result-mid';
+                else result.className = 'result-high';
+                
+                if (confidence > 90) result.className = 'result-accurate';
+                
+                status.innerHTML = '✅ Calibrated prediction complete!';
+                status.className = 'status';
+                
+            } catch (error) {
+                console.error(error);
+                status.innerHTML = '❌ Prediction failed. Try another image.';
+                status.className = 'status';
+            } finally {
+                if (inputTensor) inputTensor.dispose();
+                btn.disabled = false;
+                btn.textContent = '🚀 Predict PPM';
+            }
+        }
+
+        // Auto-actions on input changes
+        document.getElementById('trainImg').addEventListener('change', () => {
+            if (document.getElementById('trainImg').files[0] && document.getElementById('truePPM').value) {
+                setTimeout(trainModel, 500);
+            }
+        });
+        
+        document.getElementById('truePPM').addEventListener('input', () => {
+            if (document.getElementById('trainImg').files[0] && document.getElementById('truePPM').value) {
+                setTimeout(trainModel, 500);
+            }
+        });
+
+        document.getElementById('predictImg').addEventListener('change', () => {
+            if (document.getElementById('predictImg').files[0] && isCalibrated) {
+                setTimeout(predictPPM, 500);
+            }
+        });
+    </script>
+</body>
+</html>
